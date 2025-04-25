@@ -5,8 +5,8 @@
 ### **1. Clone Repository**
 
 ```sh
-git clone https://github.com/ridwanam9/IndividualTestBrief_Backend.git
-cd IndividualTestBrief_Backend
+git clone https://github.com/ridwanam9/KaryaRasa_backend.git
+cd KaryaRasa_backend
 ```
 
 ### **2. Activate Environment(venv)**
