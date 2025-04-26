@@ -13,22 +13,22 @@ def seed_data():
 
         # --- Seed Users ---
         user1 = User(
-            name='Alice',
-            email='alice@example.com',
+            name='Ridwan',
+            email='ridwan@email.com',
             password_hash=generate_password_hash('password123'),
             role='user'
         )
 
         owner1 = User(
-            name='Bob the Seller',
-            email='bob@example.com',
+            name='Yusuf the seller',
+            email='yusuf@email.com',
             password_hash=generate_password_hash('password123'),
             role='owner'
         )
 
         admin1 = User(
-            name='Charlie the Admin',
-            email='charlie@example.com',
+            name='Alif the Admin',
+            email='alif@email.com',
             password_hash=generate_password_hash('adminpass'),
             role='admin'
         )
