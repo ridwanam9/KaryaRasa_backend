@@ -1,38 +1,64 @@
-from app import create_app
+# from app import create_app
+# from app.extensions import db
+# from app.models import User, Product, Transaction
+# from datetime import datetime, timezone
+# import random
+
 from app.extensions import db
-from app.models import User, Product, Transaction
-from datetime import datetime, timezone
-import random
+from app.models import User, Product
+from werkzeug.security import generate_password_hash
 
-
-app = create_app()
-
-with app.app_context():
+def seed_data():
+    # Hapus data lama (hati-hati kalau sudah ada data penting!)
     db.drop_all()
     db.create_all()
 
-    # Seed Users
-    user1 = User(name='Alice', email='alice@email.com')
-    user1.set_password('password')
+    # Seed User (konsumen biasa)
+    user1 = User(
+        name='Alice',
+        email='alice@example.com',
+        password_hash=generate_password_hash('password123')
+    )
+    
+    # Seed Owner/Produsen (misal kita tandai sebagai user biasa juga)
+    owner1 = User(
+        name='Bob the Seller',
+        email='bob@example.com',
+        password_hash=generate_password_hash('password123')
+    )
 
-    user2 = User(name='Bob', email='bob@email.com')
-    user2.set_password('password')
+    # Seed Admin (kalau mau beda, bisa tambah role di tabel User nanti)
+    admin1 = User(
+        name='Charlie the Admin',
+        email='charlie@example.com',
+        password_hash=generate_password_hash('adminpass')
+    )
 
-    db.session.add_all([user1, user2])
+    # Seed Product
+    product1 = Product(
+        name='Laptop Gaming',
+        description='Laptop gaming high performance untuk main game AAA.',
+        price=1500.00,
+        stock=10
+    )
+    product2 = Product(
+        name='Headset Wireless',
+        description='Headset bluetooth kualitas premium.',
+        price=200.00,
+        stock=25
+    )
+    product3 = Product(
+        name='Mouse Mechanical',
+        description='Mouse dengan switch clicky premium.',
+        price=80.00,
+        stock=40
+    )
+
+    # Tambahkan ke session
+    db.session.add_all([user1, owner1, admin1, product1, product2, product3])
+    
+    # Commit ke database
     db.session.commit()
 
-    # Seed Products
-    product1 = Product(name='Organic Rice', description='Healthy rice from local farms', price=10.5, stock=100)
-    product2 = Product(name='Reusable Bag', description='Eco-friendly shopping bag', price=3.99, stock=50)
+    print("✅ Database berhasil di-seed!")
 
-    db.session.add_all([product1, product2])
-    db.session.commit()
-
-    # Seed Transactions
-    transaction1 = Transaction(user_id=user1.id, product_id=product1.id, quantity=2, total_price=21.0)
-    transaction2 = Transaction(user_id=user2.id, product_id=product2.id, quantity=5, total_price=19.95)
-
-    db.session.add_all([transaction1, transaction2])
-    db.session.commit()
-
-    print("✅ Seeding completed.")
