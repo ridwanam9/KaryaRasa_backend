@@ -13,6 +13,7 @@ class User(db.Model):
     address = db.Column(db.String(255), nullable=True)
     password_hash = db.Column(db.Text(), nullable=False)
 
+    product = db.relationship('Product', backref='user', lazy=True)
     cart = db.relationship('Cart', backref='user', uselist=False, lazy=True)
     transactions = db.relationship('Transaction', backref='user', lazy=True)
 
@@ -55,6 +56,7 @@ class Product(db.Model):
     name = db.Column(db.String(120), nullable=False)
     detail = db.Column(db.Text, nullable=True)
     category_id = db.Column(db.Integer, db.ForeignKey('categories.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True) #True karena hanya seller saja yang punya produk
     price = db.Column(db.Float, nullable=False)
     stock = db.Column(db.Integer, nullable=False)
     image_url = db.Column(db.String(255), nullable=True)
@@ -79,7 +81,7 @@ class Cart(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    # created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
 
     cart_items = db.relationship('CartItem', backref='cart', lazy=True)
 
@@ -107,16 +109,16 @@ class CartItem(db.Model):
             "quantity": self.quantity
         }
 
-class Transaction(db.Model):
+class Transaction(db.Model): #Checkout
     __tablename__ = 'transactions'
 
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False) #nama user yang membayar
     product_id = db.Column(db.Integer, db.ForeignKey('products.id'), nullable=False)
     seller_name = db.Column(db.String(120), nullable=False)
     product_name = db.Column(db.String(120), nullable=False)
     total_price = db.Column(db.Float, nullable=False)
-    product_image = db.Column(db.String(255), nullable=True)
+    image_url = db.Column(db.String(255), nullable=True) # gambar produk
     timestamp = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
 
     def to_dict(self):

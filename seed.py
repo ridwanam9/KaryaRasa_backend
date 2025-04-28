@@ -1,6 +1,6 @@
 from app import create_app
 from app.extensions import db
-from app.models import User, Product
+from app.models import User, Product, Category
 from werkzeug.security import generate_password_hash
 
 app = create_app()
@@ -33,7 +33,17 @@ def seed_data():
             role='admin'
         )
 
+        # --- Seed Category ---
+        
+
+        category1 = Category(
+            name='ELektronic',
+            
+        )
+
         # --- Seed Products ---
+        elektronik_id = Category.query.filter_by(name="Elektronik").first().id
+
         product1 = Product(
             name='Laptop Gaming',
             description='Laptop gaming high performance untuk main game AAA.',
