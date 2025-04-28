@@ -13,7 +13,7 @@ class User(db.Model):
     address = db.Column(db.String(255), nullable=True)
     password_hash = db.Column(db.Text(), nullable=False)
 
-    carts = db.relationship('Cart', backref='user', lazy=True)
+    cart = db.relationship('Cart', backref='user', uselist=False, lazy=True)
     transactions = db.relationship('Transaction', backref='user', lazy=True)
 
     def set_password(self, password):
