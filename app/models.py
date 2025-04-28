@@ -13,7 +13,7 @@ class User(db.Model):
     address = db.Column(db.String(255), nullable=True)
     password_hash = db.Column(db.Text(), nullable=False)
     role = db.Column(db.String(20), default='user')  # pilihan: 'user', 'owner', 'admin'
-
+    bank_account = db.Column(db.String(255), nullable=True)
 
     product = db.relationship('Product', backref='user', lazy=True)
     cart = db.relationship('Cart', backref='user', uselist=False, lazy=True)
