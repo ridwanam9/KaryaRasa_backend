@@ -36,10 +36,11 @@ def create_app():
     db.init_app(app)
     migrate.init_app(app, db)
 
-    from app.routes import users, products, transactions
+    from app.routes import users, products, transactions, categories
     app.register_blueprint(users.bp)
     app.register_blueprint(products.bp)
     app.register_blueprint(transactions.bp)
+    app.register_blueprint(categories.bp)
 
     from app import models
 
