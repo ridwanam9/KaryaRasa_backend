@@ -81,6 +81,7 @@ class Category(db.Model):
             # Traditional & Cultural
             "Batik",
             "Traditional Weaving",
+            "Traditional Craft",
             "Songket",
             "Cultural Art"
         ]
