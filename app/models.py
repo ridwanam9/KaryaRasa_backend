@@ -49,7 +49,54 @@ class Category(db.Model):
             "name": self.name
         }
 
+    @staticmethod
+    def insert_default_categories():
+        default_categories = [
+            # Accessories
+            "Bags & Purses",
+            "Accessories",
+            
+            # Home & Living
+            "Home Decor",
+            "Kitchen & Dining",
+            "Furniture",
+            "Storage & Organization",
+            "Pillows & Cushions",
+            
+            # Art & Collectibles
+            "Paintings",
+            "Sculptures",
+            "Prints",
+            
+            # Craft Supplies & Tools
+            "Beads & Supplies",
+            "Craft Tools",
+            "Woodworking",
+            "Fabric & Textiles",
+            
+            # Bath & Beauty
+            "Bath Accessories",
+            "Personal Care",
+            
+            # Traditional & Cultural
+            "Batik",
+            "Traditional Weaving",
+            "Songket",
+            "Cultural Art"
+        ]
 
+        for category_name in default_categories:
+            category = Category.query.filter_by(name=category_name).first()
+            if not category:
+                new_category = Category(name=category_name)
+                db.session.add(new_category)
+        
+        try:
+            db.session.commit()
+            return True
+        except Exception as e:
+            db.session.rollback()
+            return False
 
 class Product(db.Model):
     __tablename__ = 'products'
