@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify
 from app.models import User
 from app.extensions import db
-from werkzeug.security import check_password_hash
+from werkzeug.security import check_password_hash, generate_password_hash
 
 bp = Blueprint('users', __name__, url_prefix='/users')
 
@@ -17,56 +17,96 @@ def get_user(id):
     user = User.query.get_or_404(id)
     return jsonify(user.to_dict()), 200
 
-# POST /users/login → Login user
+# Register endpoint - POST /users/register
+@bp.route('/register', methods=['POST'])
+def register():
+    try:
+        data = request.get_json()
+        
+        # Validate required fields
+        required_fields = ['name', 'email', 'password']
+        for field in required_fields:
+            if not data.get(field):
+                return jsonify({
+                    "status": "error",
+                    "message": f"The {field} field is required"
+                }), 400
+
+        # Check if email already exists
+        if User.query.filter_by(email=data['email']).first():
+            return jsonify({
+                "status": "error",
+                "message": "Email is already registered"
+            }), 409
+
+        # Create new user
+        new_user = User(
+            name=data['name'],
+            email=data['email'],
+            role='user'  # default role
+        )
+        new_user.set_password(data['password'])
+
+        db.session.add(new_user)
+        db.session.commit()
+
+        return jsonify({
+            "status": "success",
+            "message": "Registration successful",
+            "data": {
+                "id": new_user.id,
+                "name": new_user.name,
+                "email": new_user.email,
+                "role": new_user.role
+            }
+        }), 201
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({
+            "status": "error",
+            "message": str(e)
+        }), 500
+
+# Login endpoint - POST /users/login
 @bp.route('/login', methods=['POST'])
 def login():
-    data = request.get_json()
-    email = data.get("email")
-    password = data.get("password")
+    try:
+        data = request.get_json()
+        
+        # Validate input
+        if not data.get('email') or not data.get('password'):
+            return jsonify({
+                "status": "error",
+                "message": "Email and password are required"
+            }), 400
 
-    user = User.query.filter_by(email=email).first()
+        # Find user by email
+        user = User.query.filter_by(email=data['email']).first()
 
-    if user and check_password_hash(user.password_hash, password):
-        return jsonify({"message": "Login successful", "user": user.to_dict()}), 200
-    else:
-        return jsonify({"message": "Invalid email or password"}), 401
+        # Check user and password
+        if user and check_password_hash(user.password_hash, data['password']):
+            return jsonify({
+                "status": "success",
+                "message": "Login successful",
+                "data": {
+                    "id": user.id,
+                    "name": user.name,
+                    "email": user.email,
+                    "role": user.role
+                }
+            }), 200
+        else:
+            return jsonify({
+                "status": "error",
+                "message": "Invalid email or password"
+            }), 401
 
-
-# POST /users → Create new user
-@bp.route('/', methods=['POST'])
-def create_user():
-    data = request.get_json()
-    if not data.get('name') or not data.get('email') or not data.get('password'):
-        return jsonify({"error": "Missing required fields"}), 400
-
-    if User.query.filter_by(email=data['email']).first():
-        return jsonify({"error": "Email already exists"}), 409
-
-    new_user = User(
-        name=data['name'],
-        email=data['email'],
-    )
-    new_user.set_password(data['password'])
-
-    db.session.add(new_user)
-    db.session.commit()
-    return jsonify(new_user.to_dict()), 201
-
-
-# # PUT /users/<int:id> → Update user
-# @bp.route('/<int:id>', methods=['PUT'])
-# def update_user(id):
-#     user = User.query.get_or_404(id)
-#     data = request.get_json()
-
-#     user.name = data.get('name', user.name)
-#     user.email = data.get('email', user.email)
-#     user.password = data.get('password', user.password)
-
-#     db.session.commit()
-#     return jsonify(user.to_dict()), 200
-
-# there is an error far update user, will fix it later
+    except Exception as e:
+        return jsonify({
+            "status": "error",
+            "message": str(e)
+        }), 500
 
 # DELETE /users/<int:id> → Delete user
 @bp.route('/<int:id>', methods=['DELETE'])
