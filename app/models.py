@@ -60,13 +60,11 @@ class Category(db.Model):
             "Home Decor",
             "Kitchen & Dining",
             "Furniture",
-            "Storage & Organization",
             "Pillows & Cushions",
             
             # Art & Collectibles
             "Paintings",
             "Sculptures",
-            "Prints",
             
             # Craft Supplies & Tools
             "Beads & Supplies",
