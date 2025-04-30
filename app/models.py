@@ -49,8 +49,6 @@ class Category(db.Model):
             "name": self.name
         }
 
-
-
 class Product(db.Model):
     __tablename__ = 'products'
     
