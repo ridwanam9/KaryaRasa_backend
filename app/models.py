@@ -12,7 +12,7 @@ class User(db.Model):
     phone = db.Column(db.String(20), nullable=True)
     address = db.Column(db.String(255), nullable=True)
     password_hash = db.Column(db.Text(), nullable=False)
-    role = db.Column(db.String(20), default='user')  # pilihan: 'user', 'owner', 'admin'
+    role = db.Column(db.String(20), default='user')  # pilihan: 'user', 'seller', 'admin'
     bank_account = db.Column(db.String(255), nullable=True)
 
     product = db.relationship('Product', backref='user', lazy=True)
@@ -32,7 +32,8 @@ class User(db.Model):
             "birth_date": self.birth_date.isoformat() if self.birth_date else None,
             "email": self.email,
             "phone": self.phone,
-            "address": self.address
+            "address": self.address,
+            "role": self.role
         }
 
 class Category(db.Model):
@@ -56,13 +57,13 @@ class Product(db.Model):
     name = db.Column(db.String(120), nullable=False)
     detail = db.Column(db.Text, nullable=True)
     category_id = db.Column(db.Integer, db.ForeignKey('categories.id'), nullable=False)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True) #True karena hanya seller saja yang punya produk
+    seller_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True) #True karena hanya seller saja yang punya produk
     price = db.Column(db.Float, nullable=False)
     stock = db.Column(db.Integer, nullable=False)
     image_url = db.Column(db.String(255), nullable=True)
 
     cart_items = db.relationship('CartItem', backref='product', lazy=True)
-    transactions = db.relationship('Transaction', backref='product', lazy=True)
+    transaction_items = db.relationship('TransactionItem', backref='product', lazy=True)
 
     def to_dict(self):
         return {
@@ -89,7 +90,7 @@ class Cart(db.Model):
         return {
             "id": self.id,
             "user_id": self.user_id,
-            "created_at": self.created_at.isoformat() if self.created_at else None,
+            # "created_at": self.created_at.isoformat() if self.created_at else None,
             "cart_items": [item.to_dict() for item in self.cart_items]
         }
 
@@ -114,12 +115,11 @@ class Transaction(db.Model): #Checkout
 
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False) #nama user yang membayar
-    product_id = db.Column(db.Integer, db.ForeignKey('products.id'), nullable=False)
-    seller_name = db.Column(db.String(120), nullable=False)
-    product_name = db.Column(db.String(120), nullable=False)
     total_price = db.Column(db.Float, nullable=False)
-    image_url = db.Column(db.String(255), nullable=True) # gambar produk
     timestamp = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+
+    transaction_items = db.relationship('TransactionItem', backref='transaction', lazy=True)
+
 
     def to_dict(self):
         return {
@@ -128,6 +128,29 @@ class Transaction(db.Model): #Checkout
             "seller_name": self.seller_name,
             "product_name": self.product_name,
             "total_price": self.total_price,
-            "product_image": self.product_image,
+            "image_url": self.image_url,
             "timestamp": self.timestamp.isoformat() if self.timestamp else None
+        }
+    
+class TransactionItem(db.Model):
+    __tablename__ = 'transaction_items'
+
+    id = db.Column(db.Integer, primary_key=True)
+    transaction_id = db.Column(db.Integer, db.ForeignKey('transactions.id'), nullable=False)
+    product_id = db.Column(db.Integer, db.ForeignKey('products.id'), nullable=False)
+    quantity = db.Column(db.Integer, nullable=False)
+    price = db.Column(db.Float, nullable=False)  # price saat checkout
+    image_url = db.Column(db.String(255), nullable=True)
+    product_name = db.Column(db.String(120), nullable=False)
+    seller_name = db.Column(db.String(120), nullable=False)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "product_id": self.product_id,
+            "product_name": self.product_name,
+            "quantity": self.quantity,
+            "price": self.price,
+            "image_url": self.image_url,
+            "seller_name": self.seller_name
         }
