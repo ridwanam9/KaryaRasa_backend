@@ -61,6 +61,7 @@ class Product(db.Model):
     price = db.Column(db.Float, nullable=False)
     stock = db.Column(db.Integer, nullable=False)
     image_url = db.Column(db.String(255), nullable=True)
+    description = db.Column(db.Text(), nullable=False)
 
     cart_items = db.relationship('CartItem', backref='product', lazy=True)
     transaction_items = db.relationship('TransactionItem', backref='product', lazy=True)
