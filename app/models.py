@@ -55,7 +55,6 @@ class Product(db.Model):
     
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(120), nullable=False)
-    detail = db.Column(db.Text, nullable=True)
     category_id = db.Column(db.Integer, db.ForeignKey('categories.id'), nullable=False)
     seller_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True) #True karena hanya seller saja yang punya produk
     price = db.Column(db.Float, nullable=False)
