@@ -2,6 +2,11 @@ from flask import Blueprint, request, jsonify
 from app.models import User
 from app.extensions import db
 from werkzeug.security import check_password_hash, generate_password_hash
+from app.utils.auth import token_required
+from datetime import datetime, timedelta, timezone
+from flask import current_app
+import jwt
+
 
 bp = Blueprint('users', __name__, url_prefix='/users')
 
@@ -74,21 +79,24 @@ def login():
     try:
         data = request.get_json()
         
-        # Validate input
         if not data.get('email') or not data.get('password'):
             return jsonify({
                 "status": "error",
                 "message": "Email and password are required"
             }), 400
 
-        # Find user by email
         user = User.query.filter_by(email=data['email']).first()
 
-        # Check user and password
-        if user and check_password_hash(user.password_hash, data['password']):
+        if user and user.check_password(data['password']):
+            token = jwt.encode({
+                "user_id": user.id,
+                "exp": datetime.now(timezone.utc) + timedelta(hours=1)
+            }, current_app.config['SECRET_KEY'], algorithm="HS256")
+
             return jsonify({
                 "status": "success",
                 "message": "Login successful",
+                "token": token,
                 "data": {
                     "id": user.id,
                     "name": user.name,
@@ -108,6 +116,8 @@ def login():
             "message": str(e)
         }), 500
 
+
+
 # DELETE /users/<int:id> → Delete user
 @bp.route('/<int:id>', methods=['DELETE'])
 def delete_user(id):
@@ -115,3 +125,20 @@ def delete_user(id):
     db.session.delete(user)
     db.session.commit()
     return jsonify({"message": f"User {id} deleted"}), 200
+
+
+@bp.route('/role/switch', methods=['POST'])
+@token_required
+def switch_role(current_user):
+    if current_user.role == 'seller':
+        return jsonify({"message": "User is already a seller"}), 200
+    elif current_user.role != 'user':
+        return jsonify({"error": "Role switch only allowed from 'user' to 'seller'"}), 400
+
+    current_user.role = 'seller'
+    db.session.commit()
+
+    return jsonify({
+        "message": "User role successfully switched to seller",
+        "user": current_user.to_dict()
+    }), 200
