@@ -69,7 +69,7 @@ class Product(db.Model):
         return {
             "id": self.id,
             "name": self.name,
-            "detail": self.detail,
+            "description": self.description,
             "category": self.category.name if self.category else None,
             "price": self.price,
             "stock": self.stock,
