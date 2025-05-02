@@ -125,10 +125,7 @@ class Transaction(db.Model): #Checkout
         return {
             "id": self.id,
             "user_id": self.user_id,
-            "seller_name": self.seller_name,
-            "product_name": self.product_name,
             "total_price": self.total_price,
-            "image_url": self.image_url,
             "timestamp": self.timestamp.isoformat() if self.timestamp else None
         }
     

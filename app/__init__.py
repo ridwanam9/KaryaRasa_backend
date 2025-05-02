@@ -23,6 +23,7 @@
 from flask import Flask
 from config import Config
 from app.extensions import db, migrate
+from flask_cors import CORS
 # from dotenv import load_dotenv
 
 
@@ -32,6 +33,11 @@ def create_app():
 
     app = Flask(__name__)
     app.config.from_object(Config)
+
+     # Konfigurasi CORS setelah app selesai di-setup
+    # CORS(app, resources={r"/api/*": {"origins": "http://localhost:3000"}})
+    CORS(app)
+
 
     db.init_app(app)
     migrate.init_app(app, db)
