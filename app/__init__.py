@@ -28,13 +28,17 @@ from flask_cors import CORS
 
 
 
-def create_app():
+def create_app(testing=False):
     # load_dotenv()
 
     app = Flask(__name__)
     app.config.from_object(Config)
 
-     # Konfigurasi CORS setelah app selesai di-setup
+    if testing:
+        app.config['TESTING'] = True
+        app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
+
+    # Konfigurasi CORS setelah app selesai di-setup
     # CORS(app, resources={r"/api/*": {"origins": "http://localhost:3000"}})
     CORS(app)
 
@@ -54,4 +58,3 @@ def create_app():
         db.create_all()
 
     return app
-
