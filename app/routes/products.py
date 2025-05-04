@@ -79,3 +79,13 @@ def delete_product(product_id):
     db.session.delete(product)
     db.session.commit()
     return jsonify({"message": "Product deleted"}), 200
+
+
+@bp.route('/category/<int:category_id>', methods=['GET'])
+def get_products_by_category(category_id):
+    category = Category.query.get(category_id)
+    if not category:
+        return jsonify({"message": "Category not found"}), 404
+
+    products = Product.query.filter_by(category_id=category_id).all()
+    return jsonify([p.to_dict() for p in products]), 200
