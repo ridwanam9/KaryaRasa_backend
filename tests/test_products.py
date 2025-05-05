@@ -3,7 +3,7 @@
 import pytest
 from app import create_app
 from app.extensions import db
-from app.models import Product, Category
+from app.models import Product, Category, User
 
 @pytest.fixture
 def client():
@@ -95,3 +95,24 @@ def test_delete_product(client):
     resp = client.delete(f'/products/{product.id}')
     assert resp.status_code == 200
     assert resp.get_json()["message"] == "Product deleted"
+
+def test_add_review_success(client):
+    # Buat produk dan user dummy dulu jika perlu
+    product = Product.query.first()
+    user = User.query.first()
+    data = {"user_id": user.id, "rating": 5, "review": "Bagus!"}
+    resp = client.post(f'/products/{product.id}/reviews', json=data)
+    assert resp.status_code == 201
+
+def test_add_review_invalid_rating(client):
+    product = Product.query.first()
+    user = User.query.first()
+    data = {"user_id": user.id, "rating": 6, "review": "Invalid"}
+    resp = client.post(f'/products/{product.id}/reviews', json=data)
+    assert resp.status_code == 400
+
+def test_get_reviews(client):
+    product = Product.query.first()
+    resp = client.get(f'/products/{product.id}/reviews')
+    assert resp.status_code == 200
+    assert isinstance(resp.get_json(), list)

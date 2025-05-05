@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify
-from app.models import Category, Product
+from app.models import Category, Product, ProductReview
 from app.extensions import db
 
 
@@ -89,3 +89,39 @@ def get_products_by_category(category_id):
 
     products = Product.query.filter_by(category_id=category_id).all()
     return jsonify([p.to_dict() for p in products]), 200
+
+
+@bp.route('/<int:product_id>/reviews', methods=['POST'])
+def add_review(product_id):
+    data = request.get_json()
+    user_id = data.get('user_id')
+    rating = data.get('rating')
+    review = data.get('review', '')
+
+    # Validasi rating
+    if not (1 <= rating <= 5):
+        return jsonify({'message': 'Rating must be 1-5'}), 400
+
+    # (Opsional) Validasi user pernah beli produk
+    # ...
+
+    new_review = ProductReview(
+        product_id=product_id,
+        user_id=user_id,
+        rating=rating,
+        review=review
+    )
+    db.session.add(new_review)
+    db.session.commit()
+    return jsonify({'message': 'Review added'}), 201
+
+
+@bp.route('/<int:product_id>/reviews', methods=['GET'])
+def get_reviews(product_id):
+    reviews = ProductReview.query.filter_by(product_id=product_id).all()
+    return jsonify([{
+        'user_id': r.user_id,
+        'rating': r.rating,
+        'review': r.review,
+        'created_at': r.created_at
+    } for r in reviews]), 200

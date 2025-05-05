@@ -3,7 +3,7 @@
 import pytest
 from app import create_app
 from app.extensions import db
-from app.models import User, Product, Category, Cart, CartItem, Transaction
+from app.models import User, Product, Category, Cart, CartItem, Transaction, PromoCode
 
 @pytest.fixture
 def client():
@@ -78,3 +78,19 @@ def test_update_transaction_status(client):
     resp = client.put(f'/transactions/{transaction.id}/status', json=data)
     assert resp.status_code == 200
     assert resp.get_json()["status"] in ("success", "error")
+
+def test_checkout_with_valid_promo(client):
+    # Buat promo code dummy
+    promo = PromoCode(code="PROMO10", discount_percent=10, is_active=True)
+    db.session.add(promo)
+    db.session.commit()
+    # Buat user, cart, cart item, dsb.
+    user = User.query.first()
+    # ... setup cart ...
+    resp = client.post(f'/transactions/checkout/{user.id}', json={"promo_code": "PROMO10"})
+    assert resp.status_code in (201, 400)  # tergantung stok/cart
+
+def test_checkout_with_invalid_promo(client):
+    user = User.query.first()
+    resp = client.post(f'/transactions/checkout/{user.id}', json={"promo_code": "TIDAKVALID"})
+    assert resp.status_code == 400

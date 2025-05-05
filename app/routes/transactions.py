@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify
-from app.models import db, Transaction, TransactionItem, Product, User, Cart, CartItem
+from app.models import db, Transaction, TransactionItem, Product, User, Cart, CartItem, PromoCode
 from datetime import datetime, timezone
 
 bp = Blueprint('transactions', __name__, url_prefix='/transactions')
@@ -78,6 +78,25 @@ def checkout_from_cart(user_id):
                 'quantity': cart_item.quantity,
                 'price': product.price
             })
+
+        # Ambil kode promo dari request (jika ada)
+        promo_code_str = request.json.get('promo_code')
+        discount = 0
+
+        if promo_code_str:
+            promo = PromoCode.query.filter_by(code=promo_code_str, is_active=True).first()
+            if promo:
+                if promo.discount_percent:
+                    discount = total_price * (promo.discount_percent / 100)
+                elif promo.discount_amount:
+                    discount = promo.discount_amount
+            else:
+                return jsonify({"status": "error", "message": "Promo code is invalid or inactive"}), 400
+
+        # Setelah hitung total_price
+        total_price -= discount
+        if total_price < 0:
+            total_price = 0
 
         # Buat transaksi baru
         transaction = Transaction(

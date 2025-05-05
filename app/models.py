@@ -151,3 +151,18 @@ class TransactionItem(db.Model):
             "image_url": self.image_url,
             "seller_name": self.seller_name
         }
+
+class PromoCode(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    code = db.Column(db.String(32), unique=True, nullable=False)
+    discount_percent = db.Column(db.Float, nullable=True)  # Contoh: 10.0 untuk 10%
+    discount_amount = db.Column(db.Float, nullable=True)   # Contoh: 20000 untuk potongan tetap
+    is_active = db.Column(db.Boolean, default=True)
+
+class ProductReview(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    product_id = db.Column(db.Integer, db.ForeignKey('product.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    rating = db.Column(db.Integer, nullable=False)  # 1-5
+    review = db.Column(db.Text, nullable=True)
+    created_at = db.Column(db.DateTime, default=db.func.now())
