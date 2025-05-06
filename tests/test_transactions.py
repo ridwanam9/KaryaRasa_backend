@@ -46,6 +46,9 @@ def test_get_user_transactions(client):
 def test_checkout_from_cart(client):
     user = User.query.filter_by(email="usert@example.com").first()
     product = Product.query.first()
+    # Pastikan stok produk cukup
+    product.stock = 10
+    db.session.commit()
     # Buat cart dan cart item
     cart = Cart(user_id=user.id)
     db.session.add(cart)
@@ -53,7 +56,8 @@ def test_checkout_from_cart(client):
     cart_item = CartItem(cart_id=cart.id, product_id=product.id, quantity=2)
     db.session.add(cart_item)
     db.session.commit()
-    resp = client.post(f'/transactions/checkout/{user.id}')
+    resp = client.post(f'/transactions/checkout/{user.id}', json={})
+    print("Checkout response:", resp.get_json())  # Untuk debug jika ingin lihat error detail
     assert resp.status_code in (201, 400)
     data = resp.get_json()
     assert data["status"] in ("success", "error")

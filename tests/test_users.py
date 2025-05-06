@@ -21,7 +21,7 @@ def test_get_all_users(client):
 def test_register_missing_fields(client):
     resp = client.post('/users/register', json={})
     assert resp.status_code == 400
-    assert resp.get_json()["message"].startswith("The")
+    assert resp.get_json()["message"].startswith("Missing required fields")
 
 def test_register_success(client):
     data = {
@@ -87,7 +87,15 @@ def test_get_user_by_id(client):
     }
     reg_resp = client.post('/users/register', json=reg_data)
     user_id = reg_resp.get_json()["data"]["id"]
-    resp = client.get(f'/users/{user_id}')
+    # Login untuk dapatkan token
+    login_data = {
+        "email": "userd@example.com",
+        "password": "password123"
+    }
+    login_resp = client.post('/users/login', json=login_data)
+    token = login_resp.get_json()["token"]
+    headers = {"Authorization": f"Bearer {token}"}
+    resp = client.get(f'/users/{user_id}', headers=headers)
     assert resp.status_code == 200
     assert resp.get_json()["name"] == "User D"
 
@@ -100,6 +108,14 @@ def test_delete_user(client):
     }
     reg_resp = client.post('/users/register', json=reg_data)
     user_id = reg_resp.get_json()["data"]["id"]
-    resp = client.delete(f'/users/{user_id}')
+    # Login untuk dapatkan token
+    login_data = {
+        "email": "usere@example.com",
+        "password": "password123"
+    }
+    login_resp = client.post('/users/login', json=login_data)
+    token = login_resp.get_json()["token"]
+    headers = {"Authorization": f"Bearer {token}"}
+    resp = client.delete(f'/users/{user_id}', headers=headers)
     assert resp.status_code == 200
     assert "deleted" in resp.get_json()["message"]
