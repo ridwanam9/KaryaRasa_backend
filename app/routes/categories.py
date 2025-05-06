@@ -1,62 +1,57 @@
 from flask import Blueprint, request, jsonify
-from app.models import Category, Product
+from app.models import Category
 from app.extensions import db
 
 bp = Blueprint('categories', __name__, url_prefix='/categories')
 
-# GET all categories
+
+# GET /categories - Get all categories
 @bp.route('/', methods=['GET'])
 def get_categories():
-    try:
-        categories = Category.query.all()
-        return jsonify({
-            "status": "success",
-            "message": "Categories retrieved successfully",
-            "data": [category.to_dict() for category in categories]
-        }), 200
-    except Exception as e:
-        return jsonify({
-            "status": "error",
-            "message": str(e)
-        }), 500
+    categories = Category.query.all()
+    return jsonify({
+        "status": "success",
+        "message": "Categories retrieved successfully",
+        "data": [category.to_dict() for category in categories]
+    }), 200
 
-# GET category by ID
+
+# GET /categories/<int:id> - Get category by ID
 @bp.route('/<int:id>', methods=['GET'])
 def get_category(id):
-    try:
-        category = Category.query.get_or_404(id)
-        return jsonify({
-            "status": "success",
-            "message": "Category retrieved successfully",
-            "data": category.to_dict()
-        }), 200
-    except Exception as e:
-        return jsonify({
-            "status": "error",
-            "message": str(e)
-        }), 500
+    category = Category.query.get_or_404(id)
+    return jsonify({
+        "status": "success",
+        "message": "Category retrieved successfully",
+        "data": category.to_dict()
+    }), 200
 
-# POST new category
+
+# POST /categories - Create new category
 @bp.route('/', methods=['POST'])
 def create_category():
     try:
         data = request.get_json()
-        
-        # Validate required fields
-        if not data.get('name'):
+        name = data.get('name', '').strip()
+
+        if not name:
             return jsonify({
                 "status": "error",
                 "message": "Category name is required"
             }), 400
 
-        # Check if category already exists
-        if Category.query.filter_by(name=data['name']).first():
+        # Check for existing category (case-insensitive)
+        existing = Category.query.filter(
+            db.func.lower(Category.name) == name.lower()
+        ).first()
+
+        if existing:
             return jsonify({
                 "status": "error",
                 "message": "Category already exists"
             }), 409
 
-        new_category = Category(name=data['name'])
+        new_category = Category(name=name)
         db.session.add(new_category)
         db.session.commit()
 
