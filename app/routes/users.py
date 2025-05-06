@@ -139,3 +139,9 @@ def switch_role(current_user):
         "message": "User role successfully switched to seller",
         "user": current_user.to_dict()
     }), 200
+
+@bp.route('/logout', methods=['POST'])
+@token_required
+def logout(current_user):
+    # Dummy Logout
+    return jsonify({"status": "success", "message": "Logged out successfully"}), 200
