@@ -88,13 +88,19 @@ def checkout_from_cart(user_id):
 
         for item in items_to_process:
             product = item['product']
+            seller_name = "Unknown"
+            if product.seller_id:
+                seller = User.query.get(product.seller_id)
+                if seller:
+                    seller_name = seller.name
+
             transaction_item = TransactionItem(
                 transaction_id=transaction.id,
                 product_id=product.id,
                 quantity=item['quantity'],
                 price=item['price'],
                 product_name=product.name,
-                seller_name=product.user.name if product.user else "Unknown",
+                seller_name=seller_name,
                 image_url=product.image_url
             )
             product.stock -= item['quantity']
