@@ -140,6 +140,7 @@ def switch_role(current_user):
         "user": current_user.to_dict()
     }), 200
 
+# POST /users/logout - Logout
 @bp.route('/logout', methods=['POST'])
 @token_required
 def logout(current_user):
