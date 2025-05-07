@@ -40,7 +40,12 @@ def create_app(testing=False):
 
     # Konfigurasi CORS setelah app selesai di-setup
     # CORS(app, resources={r"/api/*": {"origins": "http://localhost:3000"}})
-    CORS(app)
+    CORS(app,
+    origins=["http://localhost:3000"],
+    supports_credentials=True,
+    allow_headers=["Content-Type", "Authorization"],
+    expose_headers=["Authorization"],
+    methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"])
 
 
     db.init_app(app)

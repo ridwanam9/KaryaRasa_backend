@@ -35,7 +35,8 @@ class User(db.Model):
             "email": self.email,
             "phone": self.phone,
             "address": self.address,
-            "role": self.role
+            "role": self.role,
+            "bank_account": self.bank_account
         }
 
 
@@ -78,7 +79,8 @@ class Product(db.Model):
             "category": self.category.name if self.category else None,
             "price": float(self.price),
             "stock": self.stock,
-            "image_url": self.image_url
+            "image_url": self.image_url,
+            "reviews": [review.to_dict() for review in self.reviews]
         }
 
 

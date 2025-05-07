@@ -105,6 +105,12 @@ def login():
         return jsonify({"status": "error", "message": str(e)}), 500
 
 
+# GET /users/me - Get current user from token
+@bp.route('/me', methods=['GET'])
+@token_required
+def get_current_user(current_user):
+    return jsonify(current_user.to_dict()), 200
+
 # DELETE /users/<int:id> - Delete user by ID
 @bp.route('/<int:id>', methods=['DELETE'])
 @token_required
@@ -120,25 +126,67 @@ def delete_user(current_user, id):
     return jsonify({"message": f"User {user.id} deleted"}), 200
 
 
-# POST /users/role/switch - Switch user role to seller
-@bp.route('/role/switch', methods=['POST'])
-@token_required
-def switch_role(current_user):
+def create_seller(current_user):
+    """
+    Upgrade user role to 'seller' and update seller-specific data.
+    """
     if current_user.role == 'seller':
-        return jsonify({"message": "User is already a seller"}), 200
+        return {
+            "message": "User is already a seller",
+            "user": current_user.to_dict()
+        }, 200
 
     if current_user.role != 'user':
-        return jsonify({
+        return {
             "error": "Role switch only allowed from 'user' to 'seller'"
-        }), 400
+        }, 400
+
+    data = request.get_json()
+    current_user.phone = data.get('phone')
+    
+    # Gabungkan bank name dan account number
+    bank_name = data.get('bank_name')
+    account_number = data.get('account_number')
+    current_user.bank_account = f"{bank_name} - {account_number}" if bank_name and account_number else None
 
     current_user.role = 'seller'
     db.session.commit()
 
-    return jsonify({
+    return {
         "message": "User role successfully switched to seller",
         "user": current_user.to_dict()
-    }), 200
+    }, 200
+
+
+@bp.route('/role/switch', methods=['POST'])
+@token_required
+def switch_role(current_user):
+    response_json, status_code = create_seller(current_user)
+    return jsonify(response_json), status_code
+
+
+# # POST /users/role/switch - Switch user role to seller
+# @bp.route('/role/switch', methods=['POST'])
+# @token_required
+# def switch_role(current_user):
+#     if current_user.role == 'seller':
+#         return jsonify({"message": "User is already a seller"}), 200
+
+#     if current_user.role != 'user':
+#         return jsonify({
+#             "error": "Role switch only allowed from 'user' to 'seller'"
+#         }), 400
+
+#     current_user.role = 'seller'
+#     db.session.commit()
+
+#     return jsonify({
+#         "message": "User role successfully switched to seller",
+#         "user": current_user.to_dict()
+#     }), 200
+
+
+
 
 # POST /users/logout - Logout
 @bp.route('/logout', methods=['POST'])
