@@ -24,12 +24,12 @@ from flask import Flask
 from config import Config
 from app.extensions import db, migrate
 from flask_cors import CORS
-# from dotenv import load_dotenv
+from dotenv import load_dotenv
 
 
 
 def create_app(testing=False):
-    # load_dotenv()
+    load_dotenv()
 
     app = Flask(__name__)
     app.config.from_object(Config)

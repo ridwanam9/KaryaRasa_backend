@@ -106,10 +106,19 @@ def login():
 
 
 # GET /users/me - Get current user from token
-@bp.route('/me', methods=['GET'])
+@bp.route('/me', methods=['GET', 'OPTIONS'])
 @token_required
-def get_current_user(current_user):
+def get_current_user(current_user=None):
+    if request.method == 'OPTIONS':
+        return '', 200
+
+    if not current_user:
+        print("Token valid tapi user tidak ditemukan.")
+        return jsonify({"error": "User not found"}), 404
+
+    print(f"Current user: {current_user.email}")
     return jsonify(current_user.to_dict()), 200
+
 
 # DELETE /users/<int:id> - Delete user by ID
 @bp.route('/<int:id>', methods=['DELETE'])
