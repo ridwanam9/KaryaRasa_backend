@@ -18,6 +18,10 @@ def token_required(func):
     """
     @wraps(func)
     def wrapper(*args, **kwargs):
+        # Allow CORS preflight request without token
+        if request.method == 'OPTIONS':
+            return '', 200
+
         auth_header = request.headers.get('Authorization', None)
 
         if not auth_header:
