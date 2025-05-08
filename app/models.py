@@ -148,6 +148,8 @@ class TransactionItem(db.Model):
     image_url = db.Column(db.String(255), nullable=True)
     product_name = db.Column(db.String(120), nullable=False)
     seller_name = db.Column(db.String(120), nullable=False)
+    payment_status = db.Column(db.String(20), default='unpaid')  # opsi: unpaid, paid, processed
+
 
     def to_dict(self):
         return {
@@ -157,7 +159,8 @@ class TransactionItem(db.Model):
             "quantity": self.quantity,
             "price": float(self.price),
             "image_url": self.image_url,
-            "seller_name": self.seller_name
+            "seller_name": self.seller_name,
+            "payment_status": self.payment_status
         }
 
 

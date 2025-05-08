@@ -1,6 +1,9 @@
 from flask import Blueprint, request, jsonify
 from app.models import db, Transaction, TransactionItem, Product, User, Cart, CartItem, PromoCode
 from datetime import datetime, timezone
+from flask_jwt_extended import jwt_required, get_jwt_identity
+import jwt
+from app.utils.auth import token_required
 
 bp = Blueprint('transactions', __name__, url_prefix='/transactions')
 
@@ -33,6 +36,78 @@ def apply_promo_code(code_str, total_price):
     elif promo.discount_amount:
         return promo.discount_amount
     return 0
+
+
+@bp.route('/api/cart/items', methods=['GET'])
+@token_required
+def get_cart_items():
+    user_id = get_jwt_identity()
+    user = User.query.get(user_id)
+
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+
+    if not user.cart:
+        return jsonify({"message": "Cart is empty"}), 200
+
+    cart_items = [item.to_dict() for item in user.cart.cart_items]
+
+    return jsonify({
+        "cart_id": user.cart.id,
+        "user_id": user.id,
+        "cart_items": cart_items
+    }), 200
+
+
+@bp.route('/cart/<int:user_id>', methods=['GET'])
+@token_required
+def get_user_cart_items(user_id):
+    """
+    Endpoint untuk admin/seller melihat cart pengguna berdasarkan user_id
+    """
+    # Dapatkan ID pengguna dari token JWT
+    current_user_id = get_jwt_identity()
+    
+    # Cari user yang sedang login
+    current_user = User.query.get(current_user_id)
+    if not current_user or current_user.role not in ['admin', 'seller']:
+        return jsonify({"error": "Tidak memiliki izin"}), 403
+    
+    # Cari cart berdasarkan user_id yang diminta
+    cart = Cart.query.filter_by(user_id=user_id).first()
+    if not cart:
+        return jsonify({"error": "Cart tidak ditemukan"}), 404
+    
+    # Dapatkan semua item dalam cart
+    cart_items = CartItem.query.filter_by(cart_id=cart.id).all()
+    
+    # Buat response yang lebih informatif dengan detail produk
+    items_detail = []
+    for item in cart_items:
+        product = Product.query.get(item.product_id)
+        if product:
+            items_detail.append({
+                "id": item.id,
+                "product_id": item.product_id,
+                "product_name": product.name,
+                "product_price": product.price,
+                "quantity": item.quantity,
+                "subtotal": product.price * item.quantity
+            })
+    
+    # Hitung total harga
+    total_price = sum(item["subtotal"] for item in items_detail)
+    
+    response = {
+        "cart_id": cart.id,
+        "user_id": user_id,
+        "items": items_detail,
+        "total_items": len(items_detail),
+        "total_price": total_price
+    }
+    
+    return jsonify(response), 200
+
 
 @bp.route('/', methods=['GET'])
 def get_transactions():
@@ -159,3 +234,37 @@ def update_transaction_status(transaction_id):
     except Exception as e:
         db.session.rollback()
         return jsonify({"status": "error", "message": str(e)}), 500
+
+
+@bp.route('/seller/orders', methods=['GET'])
+@token_required
+def get_seller_orders():
+    current_user_id = get_jwt_identity()
+    seller = User.query.get(current_user_id)
+
+    if seller.role != 'seller':
+        return jsonify({"error": "Access denied. Only sellers can access this endpoint."}), 403
+
+    # Ambil semua TransactionItem untuk produk milik seller
+    items = (
+        db.session.query(TransactionItem, Transaction, User)
+        .join(Product, Product.id == TransactionItem.product_id)
+        .join(Transaction, Transaction.id == TransactionItem.transaction_id)
+        .join(User, User.id == Transaction.user_id)
+        .filter(Product.seller_id == seller.id)
+        .order_by(Transaction.timestamp.desc())
+        .all()
+    )
+
+    result = []
+    for item, transaction, buyer in items:
+        result.append({
+            "product_name": item.product_name,
+            "buyer_name": buyer.name,
+            "quantity": item.quantity,
+            "price": float(item.price),
+            "subtotal": float(item.price) * item.quantity,
+            "payment_status": getattr(transaction, 'payment_status', 'unknown')  # default 'unknown' jika belum ada kolom
+        })
+
+    return jsonify(result), 200
