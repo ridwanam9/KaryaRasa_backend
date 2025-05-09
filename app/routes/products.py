@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify
 from app.models import Category, Product, ProductReview
 from app.extensions import db
-from app.utils import token_required
+from app.utils.auth import token_required
 
 bp = Blueprint('products', __name__, url_prefix='/products')
 
