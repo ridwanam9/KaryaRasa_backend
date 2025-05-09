@@ -1,6 +1,7 @@
 from flask import Blueprint, request, jsonify
 from app.models import Category, Product, ProductReview
 from app.extensions import db
+from app.utils import token_required
 
 bp = Blueprint('products', __name__, url_prefix='/products')
 
@@ -170,3 +171,24 @@ def get_reviews(product_id):
             "created_at": r.created_at
         } for r in reviews]
     }), 200
+
+
+# GET /products/seller/<int:seller_id> - Ambil produk dari seller
+@bp.route('/seller/<int:seller_id>', methods=['GET'])
+@token_required
+def get_products_by_seller(seller_id):
+    try:
+        # Langsung ambil produk dari seller_id
+        products = Product.query.filter_by(seller_id=seller_id).all()
+        
+        return jsonify({
+            "status": "success",
+            "message": "Produk berhasil diambil",
+            "data": [product.to_dict() for product in products]
+        }), 200
+
+    except Exception as e:
+        return jsonify({
+            "status": "error",
+            "message": str(e)
+        }), 500
