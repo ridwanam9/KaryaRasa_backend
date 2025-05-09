@@ -173,17 +173,17 @@ def get_reviews(product_id):
     }), 200
 
 
-# GET /products/seller/<int:seller_id> - Ambil produk dari seller
+# GET /products/seller/<int:seller_id> - Ambil produk berdasarkan seller
 @bp.route('/seller/<int:seller_id>', methods=['GET'])
 @token_required
 def get_products_by_seller(seller_id):
     try:
-        # Langsung ambil produk dari seller_id
+        # Langsung ambil produk berdasarkan seller_id
         products = Product.query.filter_by(seller_id=seller_id).all()
         
         return jsonify({
             "status": "success",
-            "message": "Produk berhasil diambil",
+            "message": "Daftar produk seller berhasil diambil",
             "data": [product.to_dict() for product in products]
         }), 200
 
