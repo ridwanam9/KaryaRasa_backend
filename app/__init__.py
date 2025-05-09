@@ -41,7 +41,7 @@ def create_app(testing=False):
     # Konfigurasi CORS setelah app selesai di-setup
     # CORS(app, resources={r"/api/*": {"origins": "http://localhost:3000"}})
     CORS(app,
-    origins=["https://karyarasa.netlify.app/"],
+    origins=["https://karyarasa.netlify.app", "https://karyarasa.netlify.app/", "http://localhost:3000"],
     supports_credentials=True,
     allow_headers=["Content-Type", "Authorization"],
     expose_headers=["Authorization"],
