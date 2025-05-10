@@ -47,9 +47,12 @@ def get_product(product_id):
 
 
 # POST /products - Create new product
-@bp.route('/', methods=['POST'])
+@bp.route('/', methods=['POST', 'OPTIONS'])
 @token_required
 def create_product(current_user):
+    if request.method == "OPTIONS":
+        # Menangani preflight request
+        return '', 200
     if current_user.role != 'seller':
         return jsonify({"status": "error", "message": "Only sellers can add products"}), 403
 
