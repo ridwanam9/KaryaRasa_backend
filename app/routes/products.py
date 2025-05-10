@@ -2,8 +2,25 @@ from flask import Blueprint, request, jsonify
 from app.models import Category, Product, ProductReview
 from app.extensions import db
 from app.utils.auth import token_required
+from werkzeug.utils import secure_filename
+import uuid
+from supabase import create_client, Client
+from supabase_client import supabase, SUPABASE_URL
 
 bp = Blueprint('products', __name__, url_prefix='/products')
+
+
+
+# Helper function to validate price and stock
+def validate_price_and_stock(price, stock):
+    try:
+        price = float(price)
+        stock = int(stock)
+        if price <= 0 or stock < 0:
+            raise ValueError("Price must be positive and stock must be a non-negative integer.")
+        return price, stock
+    except ValueError as e:
+        return None, str(e)
 
 
 # GET /products - Get all products
@@ -28,46 +45,70 @@ def get_product(product_id):
     }), 200
 
 
+
 # POST /products - Create new product
 @bp.route('/', methods=['POST'])
-def create_product():
+@token_required
+def create_product(current_user):
+    if current_user.role != 'seller':
+        return jsonify({"status": "error", "message": "Only sellers can add products"}), 403
+
+    # Get data from the request
+    name = request.form.get('name', '').strip()
+    description = request.form.get('description', '').strip()
+    category_id = request.form.get('category_id')
+    price = request.form.get('price')
+    stock = request.form.get('stock')
+    image = request.files.get('image')
+
+    # Check if all required fields are provided
+    if not all([name, category_id, price, stock, image]):
+        return jsonify({"status": "error", "message": "Missing required fields"}), 400
+
+    # Validate category
+    category = Category.query.get(category_id)
+    if not category:
+        return jsonify({"status": "error", "message": "Category not found"}), 404
+
+    # Validate price and stock
+    price, price_error = validate_price_and_stock(price, stock)
+    if price is None:
+        return jsonify({"status": "error", "message": price_error}), 400
+
+    # Upload the image to Supabase Storage
     try:
-        data = request.get_json()
-        name = data.get('name', '').strip()
-        description = data.get('description', '').strip()
-        category_id = data.get('category_id')
-        seller_id = data.get('seller_id')
-        price = data.get('price')
-        stock = data.get('stock')
-        image_url = data.get('image_url', '').strip()
+        filename = f"{uuid.uuid4().hex}_{secure_filename(image.filename)}"
+        response = supabase.storage.from_('product-images').upload(filename, image, {"content-type": image.content_type})
+        if response.get('status_code') != 200:
+            raise Exception("Failed to upload image to Supabase Storage.")
+        image_url = f"{SUPABASE_URL}/storage/v1/object/public/product-images/{filename}"
+    except Exception as e:
+        return jsonify({"status": "error", "message": f"Error uploading image: {str(e)}"}), 500
 
-        if not all([name, category_id, price, stock]):
-            return jsonify({"status": "error", "message": "Missing required fields"}), 400
+    # Create the new product
+    product = Product(
+        name=name,
+        description=description,
+        category_id=category_id,
+        seller_id=current_user.id,
+        price=price,
+        stock=stock,
+        image_url=image_url
+    )
 
-        if not Category.query.get(category_id):
-            return jsonify({"status": "error", "message": "Category not found"}), 404
-
-        product = Product(
-            name=name,
-            description=description,
-            category_id=category_id,
-            seller_id=seller_id,
-            price=price,
-            stock=stock,
-            image_url=image_url
-        )
+    # Save the product to the database
+    try:
         db.session.add(product)
         db.session.commit()
-
-        return jsonify({
-            "status": "success",
-            "message": "Product created successfully",
-            "data": product.to_dict()
-        }), 201
-
     except Exception as e:
         db.session.rollback()
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return jsonify({"status": "error", "message": f"Error saving product: {str(e)}"}), 500
+
+    return jsonify({
+        "status": "success",
+        "message": "Product created successfully",
+        "data": product.to_dict()
+    }), 201
 
 
 # PUT /products/<product_id> - Update product
