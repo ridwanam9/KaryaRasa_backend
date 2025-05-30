@@ -1,6 +1,43 @@
-# KaryaRasa_backend# This is Backend for the future group project.
+# Karya Rasa Backend API
 
-## Link deployment: dying-helli/karyarasa-backend
+This is a backend project for the Karya Rasa website
+
+**KaryaRasa** is a backend project for a local e-commerce application that sells creative and culinary products. 
+This API is built using Python and Flask and provides user authentication, product management, and shopping cart features.
+
+> 🚧 This project was developed collaboratively with the team. 
+
+The members who responsibel for this backend project are:
+
+ - Ridwan Amirul Maulana
+ - Rio
+
+
+## 🌐 Live Deployment
+
+[https://dying-helli-ridwanam9-4b98d171.koyeb.app](https://dying-helli-ridwanam9-4b98d171.koyeb.app)
+
+
+
+## Entity Relationship Diagram
+
+![ERD](docs/supabase-schema.png)
+
+## ⚙️ Key Features
+
+- 🔐 User authentication (Register & Login) using JWT
+- 📦 Product CRUD
+- 🛒 Per-user cart management
+- 🔐 Middleware for route protection
+- 🌍 API connected to Next.js based frontend
+
+## 🧰 Technologies Used
+
+- **Python** + **Flask**
+- **PostgreSQL** + **SQLAlchemy**
+- **JWT** (Flask-JWT-Extended)
+- **CORS**, **dotenv**, etc
+
 
 ## 🛠 **Installation & Setup**
 
