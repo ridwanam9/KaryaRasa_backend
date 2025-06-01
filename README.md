@@ -10,7 +10,7 @@ This API is built using Python and Flask and provides user authentication, produ
 The members who responsibel for this backend project are:
 
  - Ridwan Amirul Maulana
- - Rio
+ - Fytrio Amando
 
 
 ## 🌐 Live Deployment
